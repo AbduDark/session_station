@@ -1,0 +1,330 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PASSENGER
+  DRIVER
+  ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SessionStatus {
+  ACTIVE
+  FULL
+  CLOSED
+  CANCELLED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  INITIATED
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  WALLET
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  PAID
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_REVIEW
+  CLOSED
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  SESSION_FULL
+  PAYOUT_APPROVED
+  GENERAL
+}
+
+model User {
+  id            String    @id @default(uuid())
+  phone         String    @unique
+  passwordHash  String?
+  role          UserRole  @default(PASSENGER)
+  isActive      Boolean   @default(true)
+  isVerified    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  driverProfile  DriverProfile?
+  bookings       Booking[]
+  seatHolds      SeatHold[]
+  notifications  Notification[]
+  complaints     Complaint[]
+  auditLogs      AuditLog[]
+  otpCodes       OtpCode[]
+  refreshTokens  RefreshToken[]
+
+  @@index([phone])
+  @@index([role])
+}
+
+model DriverProfile {
+  id                  String             @id @default(uuid())
+  userId              String             @unique
+  vehicleNumber       String
+  vehicleType         String
+  licenseNumber       String
+  totalSeats          Int                @default(14)
+  verificationStatus  VerificationStatus @default(PENDING)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions  DriverSession[]
+  payouts   DriverPayout[]
+
+  @@index([verificationStatus])
+}
+
+model Route {
+  id        String    @id @default(uuid())
+  name      String
+  baseFare  Float
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  routeStations RouteStation[]
+  sessions      DriverSession[]
+
+  @@index([isActive])
+}
+
+model Station {
+  id        String    @id @default(uuid())
+  name      String
+  latitude  Float
+  longitude Float
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  routeStations RouteStation[]
+  sessions      DriverSession[]
+
+  @@index([isActive])
+}
+
+model RouteStation {
+  id           String   @id @default(uuid())
+  routeId      String
+  stationId    String
+  stationOrder Int
+  createdAt    DateTime @default(now())
+
+  route   Route   @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@unique([routeId, stationOrder])
+  @@index([routeId])
+  @@index([stationId])
+}
+
+model DriverSession {
+  id             String        @id @default(uuid())
+  driverId       String
+  routeId        String
+  stationId      String
+  totalSeats     Int
+  availableSeats Int
+  status         SessionStatus @default(ACTIVE)
+  startedAt      DateTime      @default(now())
+  endedAt        DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  driver    DriverProfile  @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  route     Route          @relation(fields: [routeId], references: [id])
+  station   Station        @relation(fields: [stationId], references: [id])
+  bookings  Booking[]
+  seatHolds SeatHold[]
+  payouts   DriverPayout[]
+
+  @@index([status])
+  @@index([driverId])
+  @@index([routeId])
+  @@index([stationId])
+}
+
+model SeatHold {
+  id          String   @id @default(uuid())
+  sessionId   String
+  passengerId String
+  seatsCount  Int
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  session   DriverSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  passenger User          @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([passengerId])
+  @@index([expiresAt])
+}
+
+model Booking {
+  id          String        @id @default(uuid())
+  sessionId   String
+  passengerId String
+  seatsCount  Int
+  status      BookingStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  session    DriverSession @relation(fields: [sessionId], references: [id])
+  passenger  User          @relation(fields: [passengerId], references: [id])
+  payment    Payment?
+  complaints Complaint[]
+
+  @@index([sessionId])
+  @@index([passengerId])
+  @@index([status])
+}
+
+model Payment {
+  id               String        @id @default(uuid())
+  bookingId        String        @unique
+  fareAmount       Float
+  serviceFee       Float         @default(1)
+  totalAmount      Float
+  method           PaymentMethod @default(CASH)
+  status           PaymentStatus @default(INITIATED)
+  gatewayReference String?
+  idempotencyKey   String        @unique
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([idempotencyKey])
+}
+
+model DriverPayout {
+  id             String       @id @default(uuid())
+  driverId       String
+  sessionId      String
+  grossAmount    Float
+  serviceFees    Float
+  netAmount      Float
+  status         PayoutStatus @default(PENDING)
+  approvedByAdmin String?
+  paidAt         DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  driver  DriverProfile @relation(fields: [driverId], references: [id])
+  session DriverSession @relation(fields: [sessionId], references: [id])
+
+  @@index([driverId])
+  @@index([sessionId])
+  @@index([status])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  payload   Json
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+model Complaint {
+  id        String          @id @default(uuid())
+  userId    String
+  bookingId String?
+  message   String
+  status    ComplaintStatus @default(OPEN)
+  adminNote String?
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String
+  action    String
+  entity    String
+  entityId  String
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+
+  actor User @relation(fields: [actorId], references: [id])
+
+  @@index([actorId])
+  @@index([entity])
+  @@index([createdAt])
+}
+
+model OtpCode {
+  id        String   @id @default(uuid())
+  userId    String
+  code      String
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}

@@ -1,0 +1,1235 @@
+{
+  "info": {
+    "name": "Microbus Booking API",
+    "description": "Enterprise-grade microbus station booking system with real-time seat management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "microbus-api"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Request OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+201234567890\",\n  \"role\": \"PASSENGER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/request-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "request-otp"]
+            },
+            "description": "Request OTP for phone verification. Returns OTP code in development mode."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.accessToken) {",
+                  "    pm.collectionVariables.set('accessToken', jsonData.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', jsonData.data.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+201234567890\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-otp",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-otp"]
+            },
+            "description": "Verify OTP and get access/refresh tokens"
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.accessToken) {",
+                  "    pm.collectionVariables.set('accessToken', jsonData.data.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', jsonData.data.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh-token"]
+            },
+            "description": "Refresh access token using refresh token"
+          },
+          "response": []
+        },
+        {
+          "name": "Register Driver",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+201111111111\",\n  \"password\": \"securepassword123\",\n  \"vehicleNumber\": \"ABC-1234\",\n  \"vehicleType\": \"Microbus\",\n  \"licenseNumber\": \"DL123456\",\n  \"totalSeats\": 14\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register-driver",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register-driver"]
+            },
+            "description": "Register a new driver account (pending admin approval)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
+            },
+            "description": "Get current user profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+201234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
+            },
+            "description": "Update current user profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "20"}
+              ]
+            },
+            "description": "Get all users (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Drivers",
+      "item": [
+        {
+          "name": "Get My Driver Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/drivers/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["drivers", "me"]
+            },
+            "description": "Get current driver profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Update My Driver Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicleNumber\": \"XYZ-5678\",\n  \"totalSeats\": 16\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/drivers/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["drivers", "me"]
+            },
+            "description": "Update current driver profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Drivers (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/drivers?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["drivers"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "20"}
+              ]
+            },
+            "description": "Get all drivers (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Drivers (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/drivers/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["drivers", "pending"]
+            },
+            "description": "Get pending driver approvals (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Driver (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/drivers/:driverId/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["drivers", ":driverId", "approve"],
+              "variable": [
+                {"key": "driverId", "value": "driver-uuid-here"}
+              ]
+            },
+            "description": "Approve a driver (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Driver (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Invalid license\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/drivers/:driverId/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["drivers", ":driverId", "reject"],
+              "variable": [
+                {"key": "driverId", "value": "driver-uuid-here"}
+              ]
+            },
+            "description": "Reject a driver (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Routes",
+      "item": [
+        {
+          "name": "Get All Routes",
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/routes",
+              "host": ["{{baseUrl}}"],
+              "path": ["routes"]
+            },
+            "description": "Get all active routes"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Route by ID",
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/routes/:routeId",
+              "host": ["{{baseUrl}}"],
+              "path": ["routes", ":routeId"],
+              "variable": [
+                {"key": "routeId", "value": "route-uuid-here"}
+              ]
+            },
+            "description": "Get route by ID with stations"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Route (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cairo - Alexandria\",\n  \"baseFare\": 50,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/routes",
+              "host": ["{{baseUrl}}"],
+              "path": ["routes"]
+            },
+            "description": "Create a new route (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Route (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"baseFare\": 60\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/routes/:routeId",
+              "host": ["{{baseUrl}}"],
+              "path": ["routes", ":routeId"],
+              "variable": [
+                {"key": "routeId", "value": "route-uuid-here"}
+              ]
+            },
+            "description": "Update a route (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Station to Route (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stationId\": \"station-uuid-here\",\n  \"order\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/routes/:routeId/stations",
+              "host": ["{{baseUrl}}"],
+              "path": ["routes", ":routeId", "stations"],
+              "variable": [
+                {"key": "routeId", "value": "route-uuid-here"}
+              ]
+            },
+            "description": "Add station to route (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Route (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/routes/:routeId",
+              "host": ["{{baseUrl}}"],
+              "path": ["routes", ":routeId"],
+              "variable": [
+                {"key": "routeId", "value": "route-uuid-here"}
+              ]
+            },
+            "description": "Delete a route (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Stations",
+      "item": [
+        {
+          "name": "Get All Stations",
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stations",
+              "host": ["{{baseUrl}}"],
+              "path": ["stations"]
+            },
+            "description": "Get all active stations"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Station by ID",
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stations/:stationId",
+              "host": ["{{baseUrl}}"],
+              "path": ["stations", ":stationId"],
+              "variable": [
+                {"key": "stationId", "value": "station-uuid-here"}
+              ]
+            },
+            "description": "Get station by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Station (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ramses Station\",\n  \"latitude\": 30.0626,\n  \"longitude\": 31.2497,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/stations",
+              "host": ["{{baseUrl}}"],
+              "path": ["stations"]
+            },
+            "description": "Create a new station (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Station (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Ramses Central Station\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/stations/:stationId",
+              "host": ["{{baseUrl}}"],
+              "path": ["stations", ":stationId"],
+              "variable": [
+                {"key": "stationId", "value": "station-uuid-here"}
+              ]
+            },
+            "description": "Update a station (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Station (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stations/:stationId",
+              "host": ["{{baseUrl}}"],
+              "path": ["stations", ":stationId"],
+              "variable": [
+                {"key": "stationId", "value": "station-uuid-here"}
+              ]
+            },
+            "description": "Delete a station (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "Get Active Sessions",
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "active"]
+            },
+            "description": "Get all active sessions"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Session by ID",
+          "request": {
+            "auth": {"type": "noauth"},
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/:sessionId",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", ":sessionId"],
+              "variable": [
+                {"key": "sessionId", "value": "session-uuid-here"}
+              ]
+            },
+            "description": "Get session by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Sessions (Driver)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/my",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "my"]
+            },
+            "description": "Get current driver's sessions"
+          },
+          "response": []
+        },
+        {
+          "name": "Start Session (Driver)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"routeId\": \"route-uuid-here\",\n  \"stationId\": \"station-uuid-here\",\n  \"totalSeats\": 14\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sessions/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", "start"]
+            },
+            "description": "Start a new session (Driver only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Close Session (Driver)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/:sessionId/close",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", ":sessionId", "close"],
+              "variable": [
+                {"key": "sessionId", "value": "session-uuid-here"}
+              ]
+            },
+            "description": "Close a session (Driver only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Session (Driver)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/sessions/:sessionId/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["sessions", ":sessionId", "cancel"],
+              "variable": [
+                {"key": "sessionId", "value": "session-uuid-here"}
+              ]
+            },
+            "description": "Cancel a session (Driver only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Create Seat Hold",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"session-uuid-here\",\n  \"seatsCount\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings/hold",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "hold"]
+            },
+            "description": "Create a temporary seat hold (5 minutes TTL)"
+          },
+          "response": []
+        },
+        {
+          "name": "Release Seat Hold",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/hold/:holdId",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "hold", ":holdId"],
+              "variable": [
+                {"key": "holdId", "value": "hold-uuid-here"}
+              ]
+            },
+            "description": "Release a seat hold"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Booking History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/history",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "history"]
+            },
+            "description": "Get passenger booking history"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Booking by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/:bookingId",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", ":bookingId"],
+              "variable": [
+                {"key": "bookingId", "value": "booking-uuid-here"}
+              ]
+            },
+            "description": "Get booking by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/:bookingId",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", ":bookingId"],
+              "variable": [
+                {"key": "bookingId", "value": "booking-uuid-here"}
+              ]
+            },
+            "description": "Cancel a booking"
+          },
+          "response": []
+        },
+        {
+          "name": "Cleanup Expired Holds (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/cleanup-expired",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "cleanup-expired"]
+            },
+            "description": "Cleanup expired seat holds (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Process Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"holdId\": \"hold-uuid-here\",\n  \"idempotencyKey\": \"unique-payment-key-123\",\n  \"method\": \"CASH\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/pay",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "pay"]
+            },
+            "description": "Process payment for a seat hold"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/my",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "my"]
+            },
+            "description": "Get passenger payment history"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/:paymentId",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", ":paymentId"],
+              "variable": [
+                {"key": "paymentId", "value": "payment-uuid-here"}
+              ]
+            },
+            "description": "Get payment by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Refund Payment (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/:paymentId/refund",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", ":paymentId", "refund"],
+              "variable": [
+                {"key": "paymentId", "value": "payment-uuid-here"}
+              ]
+            },
+            "description": "Refund a payment (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payouts",
+      "item": [
+        {
+          "name": "Request Payout (Driver)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"session-uuid-here\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payouts/request",
+              "host": ["{{baseUrl}}"],
+              "path": ["payouts", "request"]
+            },
+            "description": "Request payout for a closed session (Driver only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Payouts (Driver)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payouts/my",
+              "host": ["{{baseUrl}}"],
+              "path": ["payouts", "my"]
+            },
+            "description": "Get driver payout history"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Payouts (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payouts?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["payouts"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "20"}
+              ]
+            },
+            "description": "Get all payouts (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payout by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payouts/:payoutId",
+              "host": ["{{baseUrl}}"],
+              "path": ["payouts", ":payoutId"],
+              "variable": [
+                {"key": "payoutId", "value": "payout-uuid-here"}
+              ]
+            },
+            "description": "Get payout by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Payout (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payouts/:payoutId/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["payouts", ":payoutId", "approve"],
+              "variable": [
+                {"key": "payoutId", "value": "payout-uuid-here"}
+              ]
+            },
+            "description": "Approve a payout (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Payout as Paid (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payouts/:payoutId/paid",
+              "host": ["{{baseUrl}}"],
+              "path": ["payouts", ":payoutId", "paid"],
+              "variable": [
+                {"key": "payoutId", "value": "payout-uuid-here"}
+              ]
+            },
+            "description": "Mark payout as paid (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get My Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"]
+            },
+            "description": "Get user notifications"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/unread-count",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "unread-count"]
+            },
+            "description": "Get unread notification count"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/:notificationId/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", ":notificationId", "read"],
+              "variable": [
+                {"key": "notificationId", "value": "notification-uuid-here"}
+              ]
+            },
+            "description": "Mark notification as read"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/read-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "read-all"]
+            },
+            "description": "Mark all notifications as read"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Complaints",
+      "item": [
+        {
+          "name": "Create Complaint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"booking-uuid-here\",\n  \"message\": \"Driver was late\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/complaints",
+              "host": ["{{baseUrl}}"],
+              "path": ["complaints"]
+            },
+            "description": "Create a new complaint"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Complaints",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/complaints/my",
+              "host": ["{{baseUrl}}"],
+              "path": ["complaints", "my"]
+            },
+            "description": "Get user complaints"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Complaints (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/complaints?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["complaints"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "20"}
+              ]
+            },
+            "description": "Get all complaints (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Complaint by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/complaints/:complaintId",
+              "host": ["{{baseUrl}}"],
+              "path": ["complaints", ":complaintId"],
+              "variable": [
+                {"key": "complaintId", "value": "complaint-uuid-here"}
+              ]
+            },
+            "description": "Get complaint by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Complaint (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"IN_REVIEW\",\n  \"adminNote\": \"Investigating the issue\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/complaints/:complaintId",
+              "host": ["{{baseUrl}}"],
+              "path": ["complaints", ":complaintId"],
+              "variable": [
+                {"key": "complaintId", "value": "complaint-uuid-here"}
+              ]
+            },
+            "description": "Update complaint status (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "dashboard"]
+            },
+            "description": "Get dashboard statistics (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Finance Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/reports/finance",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "reports", "finance"]
+            },
+            "description": "Get financial report (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Recent Activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/activity?limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "activity"],
+              "query": [
+                {"key": "limit", "value": "20"}
+              ]
+            },
+            "description": "Get recent activity (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Audit",
+      "item": [
+        {
+          "name": "Get Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit/logs?page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["audit", "logs"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "limit", "value": "50"}
+              ]
+            },
+            "description": "Get audit logs (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Audit Log by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit/logs/:logId",
+              "host": ["{{baseUrl}}"],
+              "path": ["audit", "logs", ":logId"],
+              "variable": [
+                {"key": "logId", "value": "log-uuid-here"}
+              ]
+            },
+            "description": "Get audit log by ID (Admin only)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
