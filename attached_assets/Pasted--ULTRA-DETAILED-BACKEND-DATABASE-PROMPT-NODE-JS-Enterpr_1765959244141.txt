@@ -1,0 +1,485 @@
+🔥 ULTRA-DETAILED BACKEND + DATABASE PROMPT (NODE.JS)
+(Enterprise-Grade, Production-Ready, Real-Time Booking System)
+🎯 ROLE & MINDSET
+
+You are acting as a Principal Backend Engineer / System Architect with experience building large-scale real-time transportation and fintech systems.
+
+Your task is to design and generate a complete backend architecture + database design + core implementation for a microbus station booking system.
+
+The output must be production-grade, scalable, secure, transaction-safe, and ready for real users.
+
+🧱 MANDATORY TECH STACK
+
+You MUST use:
+
+Node.js (LTS)
+
+TypeScript (strict mode)
+
+NestJS (modular architecture)
+
+PostgreSQL (ACID, transactional)
+
+Prisma ORM
+
+Redis (locking, caching, TTL)
+
+Socket.IO (real-time updates)
+
+JWT Auth + Refresh Tokens
+
+Swagger (OpenAPI)
+
+Docker-ready
+
+REST APIs only (no GraphQL)
+
+🧠 SYSTEM DOMAIN OVERVIEW
+
+The system manages physical microbus stations with drivers arriving, opening sessions, and passengers booking seats in real time.
+
+Core Concepts:
+
+A Route has ordered Stations
+
+A Driver arrives at a station and opens a Session
+
+A Session represents ONE vehicle waiting to depart
+
+Passengers book seats in the session
+
+Seats are limited and must never be oversold
+
+Payments include:
+
+Ride fare
+
+Fixed 1 EGP service fee
+
+When session is full → driver can request payout
+
+Admin oversees everything
+
+🚦 STRICT BUSINESS RULES (VERY IMPORTANT)
+
+Seats must never be double-booked
+
+Seat reservation must support temporary hold (TTL)
+
+Payment must be atomic with seat confirmation
+
+Session becomes FULL automatically
+
+Driver payout is manual or approved by admin
+
+Every financial action must be auditable
+
+System must survive network loss & retries
+
+All actions must be idempotent
+
+🗂️ PROJECT STRUCTURE (MANDATORY OUTPUT)
+
+You MUST generate a real NestJS folder structure:
+
+src/
+ ├── app.module.ts
+ ├── main.ts
+ ├── config/
+ ├── common/
+ │   ├── guards/
+ │   ├── decorators/
+ │   ├── interceptors/
+ │   ├── filters/
+ │   └── enums/
+ ├── auth/
+ ├── users/
+ ├── drivers/
+ ├── routes/
+ ├── stations/
+ ├── sessions/
+ ├── bookings/
+ ├── payments/
+ ├── payouts/
+ ├── notifications/
+ ├── complaints/
+ ├── admin/
+ ├── audit/
+ ├── realtime/
+ └── prisma/
+
+
+Each module MUST include:
+
+controller
+
+service
+
+dto
+
+entity/model
+
+tests (basic)
+
+🗄️ DATABASE DESIGN (EXTREMELY DETAILED)
+You MUST design:
+✔ Logical schema
+✔ Physical schema
+✔ Prisma models
+✔ Indexes
+✔ Constraints
+✔ Enums
+✔ Transactions
+✔ Locking strategy
+🧩 DATABASE TABLES (FULL SPEC)
+User
+
+id (UUID, PK)
+
+phone (unique, indexed)
+
+role (PASSENGER | DRIVER | ADMIN)
+
+is_active
+
+is_verified
+
+created_at
+
+updated_at
+
+DriverProfile
+
+id
+
+user_id (FK → User)
+
+vehicle_number
+
+vehicle_type
+
+license_number
+
+verification_status (PENDING | APPROVED | REJECTED)
+
+created_at
+
+Route
+
+id
+
+name
+
+base_fare
+
+is_active
+
+Station
+
+id
+
+name
+
+latitude
+
+longitude
+
+is_active
+
+RouteStation
+
+route_id
+
+station_id
+
+station_order
+
+UNIQUE(route_id, station_order)
+
+DriverSession
+
+id
+
+driver_id
+
+route_id
+
+station_id
+
+total_seats
+
+available_seats
+
+status (ACTIVE | FULL | CLOSED | CANCELLED)
+
+started_at
+
+ended_at
+
+⚠️ available_seats MUST be transactionally updated.
+
+SeatHold (CRITICAL TABLE)
+
+Used for temporary seat locking.
+
+id
+
+session_id
+
+passenger_id
+
+seats_count
+
+expires_at (TTL 5 minutes)
+
+created_at
+
+Booking
+
+id
+
+session_id
+
+passenger_id
+
+seats_count
+
+status (PENDING | CONFIRMED | CANCELLED | EXPIRED)
+
+created_at
+
+Payment
+
+id
+
+booking_id
+
+fare_amount
+
+service_fee (always 1)
+
+total_amount
+
+method
+
+status (INITIATED | SUCCESS | FAILED | REFUNDED)
+
+gateway_reference
+
+created_at
+
+DriverPayout
+
+id
+
+driver_id
+
+session_id
+
+gross_amount
+
+service_fees
+
+net_amount
+
+status (PENDING | APPROVED | PAID)
+
+approved_by_admin
+
+paid_at
+
+Notification
+
+id
+
+user_id
+
+type
+
+payload (JSON)
+
+is_read
+
+created_at
+
+Complaint
+
+id
+
+user_id
+
+booking_id
+
+message
+
+status (OPEN | IN_REVIEW | CLOSED)
+
+admin_note
+
+AuditLog
+
+id
+
+actor_id
+
+action
+
+entity
+
+entity_id
+
+before
+
+after
+
+created_at
+
+🔐 TRANSACTION & LOCKING STRATEGY (MUST IMPLEMENT)
+Seat Booking Algorithm:
+
+Start DB transaction
+
+Check available seats
+
+Create SeatHold
+
+Decrement available_seats
+
+Commit transaction
+
+Set Redis TTL = 5 minutes
+
+On payment success:
+
+Convert SeatHold → Booking
+
+Confirm seats
+
+Remove SeatHold
+
+On TTL expiry:
+
+Restore seats
+
+Delete SeatHold
+
+🔥 REDIS USAGE (MANDATORY)
+
+seat:lock:{sessionId}
+
+hold:{holdId} (TTL)
+
+Caching routes & stations
+
+Rate limit OTP requests
+
+🔔 REALTIME (SOCKET.IO)
+
+Events:
+
+session.updated
+
+seat.booked
+
+seat.released
+
+session.full
+
+payment.success
+
+Rooms:
+
+session:{id}
+
+driver:{id}
+
+🌐 API ENDPOINTS (FULL LIST)
+AUTH
+
+POST /auth/request-otp
+
+POST /auth/verify-otp
+
+POST /auth/refresh-token
+
+PASSENGER
+
+GET /routes
+
+GET /routes/:id
+
+GET /sessions/active
+
+POST /bookings/hold
+
+POST /payments/pay
+
+GET /bookings/history
+
+DRIVER
+
+POST /sessions/start
+
+POST /sessions/:id/close
+
+GET /sessions/my
+
+GET /payouts/my
+
+ADMIN
+
+POST /routes
+
+POST /stations
+
+POST /drivers/:id/approve
+
+GET /reports/finance
+
+GET /audit/logs
+
+🛡️ SECURITY REQUIREMENTS
+
+JWT Guard
+
+Role Guard
+
+Idempotency keys for payments
+
+SQL injection safe (Prisma)
+
+Rate limit OTP
+
+Validate all DTOs
+
+🧪 TESTING REQUIREMENTS
+
+Unit tests for booking service
+
+Concurrency test scenario
+
+Payment failure simulation
+
+📦 DEPLOYMENT
+
+Dockerfile
+
+docker-compose (API + Postgres + Redis)
+
+ENV examples
+
+Production readiness checklist
+
+🎯 FINAL GOAL
+
+Generate a REAL backend that:
+
+Can handle thousands of concurrent users
+
+Never oversells seats
+
+Tracks money accurately
+
+Is expandable (subscriptions, tracking, analytics)
+
+Matches real-world transport systems
